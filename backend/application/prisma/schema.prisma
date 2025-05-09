@@ -1,0 +1,73 @@
+datasource db {
+  provider = "mysql"
+  url      = "mysql://root:root@database:3306/test"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum OrderType {
+  BUY
+  SELL
+}
+
+enum OrderStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum FeeRole {
+  MAKER
+  TAKER
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  usdAvailable Float    @default(100000)
+  usdLocked    Float    @default(0)
+  btcAvailable Float    @default(100)
+  btcLocked    Float    @default(0)
+  orders       Order[]
+  fees         Fee[]
+}
+
+model Order {
+  id              String         @id @default(uuid())
+  userId          String
+  type            OrderType
+  amount          Float
+  price           Float
+  remainingAmount Float
+  status          OrderStatus
+  createdAt       DateTime       @default(now())
+  user            User           @relation(fields: [userId], references: [id])
+  buyMatches      OrderMatch[]   @relation("BuyMatches")
+  sellMatches     OrderMatch[]   @relation("SellMatches")
+}
+
+model OrderMatch {
+  id          String   @id @default(uuid())
+  buyOrderId  String
+  sellOrderId String
+  price       Float
+  volume      Float
+  timestamp   DateTime @default(now())
+  buyOrder    Order    @relation("BuyMatches", fields: [buyOrderId], references: [id])
+  sellOrder   Order    @relation("SellMatches", fields: [sellOrderId], references: [id])
+  Fee         Fee[]
+}
+
+model Fee {
+  id        String       @id @default(uuid())
+  userId    String
+  matchId   String
+  role      FeeRole
+  amount    Float
+  createdAt DateTime     @default(now())
+  user      User         @relation(fields: [userId], references: [id])
+  match     OrderMatch   @relation(fields: [matchId], references: [id])
+}
+

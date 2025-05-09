@@ -1,0 +1,55 @@
+services:
+  frontend:
+    build: frontend
+    container_name: frontend-container
+    environment:
+      WDS_SOCKET_PORT: 0
+      PORT: 3010
+    ports:
+      - "3010:3010"
+    depends_on:
+      - backend
+    entrypoint: ["/entrypoint.sh"]
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq-container
+    environment:
+      RABBITMQ_DEFAULT_USER: YOUR_USERNAME
+      RABBITMQ_DEFAULT_PASS: YOUR_PASSWORD
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - app-network
+
+  backend:
+    build: backend
+    container_name: backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - database
+      - rabbitmq
+    entrypoint: ["/entrypoint.sh"]
+    networks:
+      - app-network
+
+  database:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: test
+    container_name: database-container
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
